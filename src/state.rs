@@ -91,3 +91,40 @@ impl Ops for u8x4 {
         ]
     }
 }
+
+impl Ops for State {
+    fn lrot(&self) -> Self {
+        unimplemented!()
+    }
+
+    fn rrot(&self) -> Self {
+        unimplemented!()
+    }
+
+    fn xor(&self, rhs: &Self) -> Self {
+        [
+            self[0].xor(&rhs[0]),
+            self[1].xor(&rhs[1]),
+            self[2].xor(&rhs[2]),
+            self[3].xor(&rhs[3]),
+        ]
+    }
+
+    fn sub_sbox(&self) -> Self {
+        [
+            self[0].sub_sbox(),
+            self[1].sub_sbox(),
+            self[2].sub_sbox(),
+            self[3].sub_sbox()
+        ]
+    }
+
+    fn sub_rsbox(&self) -> Self {
+        [
+            self[0].sub_rsbox(),
+            self[1].sub_rsbox(),
+            self[2].sub_rsbox(),
+            self[3].sub_rsbox()
+        ]
+    }
+}
