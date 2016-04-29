@@ -126,6 +126,62 @@ pub fn add_round_key(state: &State, round_key: &State) -> State {
     state.xor(round_key)
 }
 
-pub fn sub_bytes() {
-    unimplemented!()
+pub fn sub_bytes(state: &State) -> State {
+    state.sub_sbox()
 }
+
+pub fn inv_sub_bytes(state: &State) -> State {
+    state.sub_rsbox()
+}
+
+pub fn shift_rows(state: &State) -> State {
+    state.lrot()
+}
+
+pub fn inv_shift_row(state: &State) -> State {
+    state.rrot()
+}
+
+fn gmul(mut a: u8, mut b: u8) -> u8 {
+    let mut p = 0;
+    for _ in 0..8 {
+        if b & 1 != 0 { p ^= a };
+        let hi_bit_set = a & 0x80;
+        a <<= 1;
+        if hi_bit_set != 0 {
+            a ^= 0x1b;
+        }
+        b >>= 1;
+    }
+    p
+}
+
+macro_rules! impl_mix_columns {
+    ( $name:ident, $mult:expr ) => {
+        pub fn $name(state: &State) -> State {
+            let mut out = state.clone();
+            for i in 0..4 {
+                out[0][i] = gmul($mult[0], state[0][i])
+                    ^ gmul($mult[3], state[1][i])
+                    ^ gmul($mult[2], state[2][i])
+                    ^ gmul($mult[1], state[3][i]);
+                out[1][i] = gmul($mult[1], state[0][i])
+                    ^ gmul($mult[0], state[1][i])
+                    ^ gmul($mult[3], state[2][i])
+                    ^ gmul($mult[2], state[3][i]);
+                out[2][i] = gmul($mult[2], state[0][i])
+                    ^ gmul($mult[1], state[1][i])
+                    ^ gmul($mult[0], state[2][i])
+                    ^ gmul($mult[3], state[3][i]);
+                out[3][i] = gmul($mult[3], state[0][i])
+                    ^ gmul($mult[2], state[1][i])
+                    ^ gmul($mult[1], state[2][i])
+                    ^ gmul($mult[0], state[3][i]);
+            }
+            out
+        }
+    }
+}
+
+impl_mix_columns!(mix_columns, [0x02, 0x01, 0x01, 0x03]);
+impl_mix_columns!(inv_mix_columns, [0x0e, 0x09, 0x0d, 0x0b]);

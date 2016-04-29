@@ -4,15 +4,16 @@ extern crate test;
 extern crate rand;
 extern crate aes;
 
-use test::Bencher;
-use aes::aes::{ SBOX, RSBOX, RCON };
-
 #[path = "../tests/rand.rs"]
 #[macro_use] mod rand_macro;
+
+use test::Bencher;
+use aes::aes::{ SBOX, RSBOX, RCON };
 
 
 #[bench]
 fn bench_fixed_sbox(b: &mut Bencher) {
+    let index = rand!(choose 0..256);
     let sbox: [u8; 256] = [
        0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
        0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
@@ -32,17 +33,19 @@ fn bench_fixed_sbox(b: &mut Bencher) {
        0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
     ];
 
-    b.iter(|| sbox[rand!(choose 0..256)]);
+    b.iter(|| sbox[index]);
 }
 
 #[bench]
 fn bench_lazy_sbox(b: &mut Bencher) {
-    b.iter(|| SBOX[rand!(choose 0..256)]);
+    let index = rand!(choose 0..256);
+    b.iter(|| SBOX[index]);
 }
 
 
 #[bench]
 fn bench_fixed_rsbox(b: &mut Bencher) {
+    let index = rand!(choose 0..256);
     let rsbox: [u8; 256] = [
        0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB,
        0x7C, 0xE3, 0x39, 0x82, 0x9B, 0x2F, 0xFF, 0x87, 0x34, 0x8E, 0x43, 0x44, 0xC4, 0xDE, 0xE9, 0xCB,
@@ -61,24 +64,27 @@ fn bench_fixed_rsbox(b: &mut Bencher) {
        0xA0, 0xE0, 0x3B, 0x4D, 0xAE, 0x2A, 0xF5, 0xB0, 0xC8, 0xEB, 0xBB, 0x3C, 0x83, 0x53, 0x99, 0x61,
        0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D
     ];
-    b.iter(|| rsbox[rand!(choose 0..256)]);
+    b.iter(|| rsbox[index]);
 }
 
 #[bench]
 fn bench_lazy_rsbox(b: &mut Bencher) {
-    b.iter(|| RSBOX[rand!(choose 0..256)]);
+    let index = rand!(choose 0..256);
+    b.iter(|| RSBOX[index]);
 }
 
 
 #[bench]
 fn bench_fixed_rcon(b: &mut Bencher) {
+    let index = rand!(choose 0..10);
     let rcon: [u8; 10] = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36];
-    b.iter(|| rcon[rand!(choose 0..10)]);
+    b.iter(|| rcon[index]);
 }
 
 #[bench]
 fn bench_lazy_rcon(b: &mut Bencher) {
-    b.iter(|| RCON[rand!(choose 0..10)]);
+    let index = rand!(choose 0..10);
+    b.iter(|| RCON[index]);
 }
 
 #[bench]
@@ -94,5 +100,6 @@ fn bench_fn_rcon(b: &mut Bencher) {
         }
         c
     }
-    b.iter(|| rcon(rand!(choose 0..10)));
+    let index = rand!(choose 0..10);
+    b.iter(|| rcon(index));
 }

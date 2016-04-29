@@ -3,7 +3,7 @@ macro_rules! rand {
     ( _ ) => { rand::random() };
     ( $len:expr ) => {{
         use rand::Rng;
-        rand::thread_rng().gen_iter().take($len).collect::<Vec<u8>>()
+        rand::thread_rng().gen_iter().take($len).collect::<Vec<_>>()
     }};
     ( choose $range:expr, $num:expr ) => {
         rand::sample(&mut rand::thread_rng(), $range, $num)

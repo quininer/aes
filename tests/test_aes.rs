@@ -1,4 +1,9 @@
+extern crate openssl;
+extern crate rand;
 extern crate aes;
+
+#[path = "./rand.rs"]
+#[macro_use] mod rand_macro;
 
 
 #[test]
@@ -60,4 +65,75 @@ fn test_aes_rcon() {
     for (i, &n) in rcon.iter().enumerate() {
         assert_eq!(RCON[i], n);
     }
+}
+
+
+#[test]
+fn test_mix_columns() {
+    use aes::aes::mix_columns;
+    assert_eq!(
+        mix_columns(&[[0; 4]; 4]),
+        [[0; 4]; 4]
+    );
+    assert_eq!(
+        mix_columns(&[
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [8, 9, 1, 2],
+            [3, 4, 5, 6]
+        ]),
+        [
+            [7, 0, 10, 11],
+            [19, 20, 8, 13],
+            [17, 26, 9, 10],
+            [10, 7, 11, 12]
+        ]
+    );
+}
+
+#[test]
+fn test_inv_mix_columns() {
+    use aes::aes::{ mix_columns, inv_mix_columns };
+    assert_eq!(
+        inv_mix_columns(&mix_columns(&[
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [8, 9, 1, 2],
+            [3, 4, 5, 6]
+        ])),
+        [
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [8, 9, 1, 2],
+            [3, 4, 5, 6]
+        ]
+    );
+}
+
+
+#[test]
+#[should_panic]
+fn test_encrypt() {
+    use openssl::crypto::symm::{ Crypter, Type, Mode };
+
+    let key = rand!(16);
+    let plaintext = rand!(16);
+    let openssl_cipher = Crypter::new(Type::AES_128_ECB);
+    openssl_cipher.init(Mode::Encrypt, &key, &[]);
+    openssl_cipher.pad(false);
+
+    assert_eq!(
+        plaintext,
+        openssl_cipher.update(&plaintext)
+    );
+
+    let key = rand!(32);
+    let openssl_cipher = Crypter::new(Type::AES_256_ECB);
+    openssl_cipher.init(Mode::Encrypt, &key, &[]);
+    openssl_cipher.pad(false);
+
+    assert_eq!(
+        plaintext,
+        openssl_cipher.update(&plaintext)
+    );
 }

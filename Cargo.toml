@@ -7,4 +7,5 @@ authors = ["quininer kel <quininer@live.com>"]
 lazy_static = "0.2"
 
 [dev-dependencies]
+openssl = "0.7"
 rand = "0.3"

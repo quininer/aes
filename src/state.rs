@@ -93,14 +93,50 @@ impl Ops for u8x4 {
 }
 
 impl Ops for State {
+    /// ```
+    /// use aes::state::Ops;
+    /// assert_eq!(
+    ///     [[1, 2, 3, 4]; 4].lrot(),
+    ///     [
+    ///         [1, 2, 3, 4],
+    ///         [2, 3, 4, 1],
+    ///         [3, 4, 1, 2],
+    ///         [4, 1, 2, 3]
+    ///     ]
+    /// );
+    /// ```
     fn lrot(&self) -> Self {
-        unimplemented!()
+        [
+            self[0],
+            self[1].lrot(),
+            self[2].lrot().lrot(),
+            self[3].lrot().lrot().lrot(),
+        ]
     }
 
+    /// ```
+    /// use aes::state::Ops;
+    /// assert_eq!(
+    ///     [[1, 2, 3, 4]; 4].lrot().rrot(),
+    ///     [[1, 2, 3, 4]; 4]
+    /// );
+    /// ```
     fn rrot(&self) -> Self {
-        unimplemented!()
+        [
+            self[0],
+            self[1].rrot(),
+            self[2].rrot().rrot(),
+            self[3].rrot().rrot().rrot()
+        ]
     }
 
+    /// ```
+    /// use aes::state::Ops;
+    /// assert_eq!(
+    ///     [[1, 2, 3, 4]; 4].xor(&[[4, 3, 2, 1]; 4]),
+    ///     [[5, 1, 1, 5]; 4]
+    /// );
+    /// ```
     fn xor(&self, rhs: &Self) -> Self {
         [
             self[0].xor(&rhs[0]),
@@ -110,6 +146,13 @@ impl Ops for State {
         ]
     }
 
+    /// ```
+    /// use aes::state::Ops;
+    /// assert_eq!(
+    ///     [[1, 2, 3, 4]; 4].sub_sbox(),
+    ///     [[124, 119, 123, 242]; 4]
+    /// );
+    /// ```
     fn sub_sbox(&self) -> Self {
         [
             self[0].sub_sbox(),
@@ -119,6 +162,13 @@ impl Ops for State {
         ]
     }
 
+    /// ```
+    /// use aes::state::Ops;
+    /// assert_eq!(
+    ///     [[1, 2, 3, 4]; 4].sub_sbox().sub_rsbox(),
+    ///     [[1, 2, 3, 4]; 4]
+    /// );
+    /// ```
     fn sub_rsbox(&self) -> Self {
         [
             self[0].sub_rsbox(),
