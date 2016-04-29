@@ -99,12 +99,9 @@ lazy_static!{
 /// ]);
 /// ```
 pub fn key_expansion(key: &[u8], round_keys: &mut [[u8x4; 4]]) {
-    let (key_words, rounds) = match key.len() {
-        16 => (4, 10),
-        24 => (6, 12),
-        32 => (8, 14),
-        _ => panic!("invalid key size.")
-    };
+    let key_words = key.len() / 4;
+    assert!(match key_words { 4 | 6 | 8 => true, _ => false });
+    let rounds = 10 + key_words - 4;
 
     for (i, j) in (0..key.len()).step_by(4).enumerate() {
         for n in 0..4 {
