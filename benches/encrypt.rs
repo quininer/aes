@@ -21,7 +21,15 @@ fn bench_openssl_ebc_encrypt(b: &mut Bencher) {
     cipher.init(Mode::Encrypt, &key, &[]);
     cipher.pad(false);
 
-    b.iter(|| {
-        cipher.update(&plaintext)
-    });
+    b.iter(|| cipher.update(&plaintext));
+}
+
+#[bench]
+fn bench_aes_encrypt(b: &mut Bencher) {
+    use aes::aes::encrypt;
+
+    let key = rand!(16);
+    let plaintext = rand!(16);
+
+    b.iter(|| encrypt(&key, &plaintext))
 }

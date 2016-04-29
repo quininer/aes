@@ -67,6 +67,24 @@ fn test_aes_rcon() {
     }
 }
 
+#[test]
+fn test_reversal() {
+    use aes::aes::reversal;
+    assert_eq!(
+        reversal(&[
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [8, 9, 1, 2],
+            [3, 4, 5, 6]
+        ]),
+        [
+            [0, 4, 8, 3],
+            [1, 5, 9, 4],
+            [2, 6, 1, 5],
+            [3, 7, 2, 6]
+        ]
+    );
+}
 
 #[test]
 fn test_mix_columns() {
@@ -110,11 +128,10 @@ fn test_inv_mix_columns() {
     );
 }
 
-
 #[test]
-#[should_panic]
 fn test_encrypt() {
     use openssl::crypto::symm::{ Crypter, Type, Mode };
+    use aes::aes::encrypt;
 
     let key = rand!(16);
     let plaintext = rand!(16);
@@ -123,7 +140,7 @@ fn test_encrypt() {
     openssl_cipher.pad(false);
 
     assert_eq!(
-        plaintext,
+        encrypt(&key, &plaintext),
         openssl_cipher.update(&plaintext)
     );
 
@@ -133,7 +150,7 @@ fn test_encrypt() {
     openssl_cipher.pad(false);
 
     assert_eq!(
-        plaintext,
+        encrypt(&key, &plaintext),
         openssl_cipher.update(&plaintext)
     );
 }

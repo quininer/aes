@@ -1,8 +1,26 @@
 use ::aes::{ SBOX, RSBOX };
 
+
 #[allow(non_camel_case_types)]
 pub type u8x4 = [u8; 4];
 pub type State = [u8x4; 4];
+
+/// ```
+/// use aes::state::create_state;
+/// assert_eq!(
+///     create_state(&[[1, 2, 3, 4]; 4].concat()),
+///     [[1, 2, 3, 4]; 4]
+/// );
+/// ```
+pub fn create_state(input: &[u8]) -> State {
+    assert_eq!(input.len(), 16);
+    let mut state = [[0; 4]; 4];
+    for (i, &j) in input.iter().enumerate() {
+        state[i / 4][i % 4] = j;
+    }
+    state
+
+}
 
 pub trait Ops {
     fn lrot(&self) -> Self;

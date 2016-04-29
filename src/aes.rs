@@ -1,4 +1,8 @@
-use ::state::{ u8x4, State, Ops };
+use ::state::{
+    u8x4, State,
+    Ops,
+    create_state
+};
 
 
 lazy_static!{
@@ -122,25 +126,6 @@ pub fn key_expansion(key: &[u8], round_keys: &mut [[u8x4; 4]]) {
     }
 }
 
-pub fn add_round_key(state: &State, round_key: &State) -> State {
-    state.xor(round_key)
-}
-
-pub fn sub_bytes(state: &State) -> State {
-    state.sub_sbox()
-}
-
-pub fn inv_sub_bytes(state: &State) -> State {
-    state.sub_rsbox()
-}
-
-pub fn shift_rows(state: &State) -> State {
-    state.lrot()
-}
-
-pub fn inv_shift_row(state: &State) -> State {
-    state.rrot()
-}
 
 fn gmul(mut a: u8, mut b: u8) -> u8 {
     let mut p = 0;
@@ -157,31 +142,79 @@ fn gmul(mut a: u8, mut b: u8) -> u8 {
 }
 
 macro_rules! impl_mix_columns {
-    ( $name:ident, $mult:expr ) => {
+    ( $name:ident, $mult0:expr, $mult1:expr, $mult2:expr, $mult3:expr ) => {
         pub fn $name(state: &State) -> State {
             let mut out = state.clone();
             for i in 0..4 {
-                out[0][i] = gmul($mult[0], state[0][i])
-                    ^ gmul($mult[3], state[1][i])
-                    ^ gmul($mult[2], state[2][i])
-                    ^ gmul($mult[1], state[3][i]);
-                out[1][i] = gmul($mult[1], state[0][i])
-                    ^ gmul($mult[0], state[1][i])
-                    ^ gmul($mult[3], state[2][i])
-                    ^ gmul($mult[2], state[3][i]);
-                out[2][i] = gmul($mult[2], state[0][i])
-                    ^ gmul($mult[1], state[1][i])
-                    ^ gmul($mult[0], state[2][i])
-                    ^ gmul($mult[3], state[3][i]);
-                out[3][i] = gmul($mult[3], state[0][i])
-                    ^ gmul($mult[2], state[1][i])
-                    ^ gmul($mult[1], state[2][i])
-                    ^ gmul($mult[0], state[3][i]);
+                out[0][i] = gmul($mult0, state[0][i])
+                    ^ gmul($mult3, state[1][i])
+                    ^ gmul($mult2, state[2][i])
+                    ^ gmul($mult1, state[3][i]);
+                out[1][i] = gmul($mult1, state[0][i])
+                    ^ gmul($mult0, state[1][i])
+                    ^ gmul($mult3, state[2][i])
+                    ^ gmul($mult2, state[3][i]);
+                out[2][i] = gmul($mult2, state[0][i])
+                    ^ gmul($mult1, state[1][i])
+                    ^ gmul($mult0, state[2][i])
+                    ^ gmul($mult3, state[3][i]);
+                out[3][i] = gmul($mult3, state[0][i])
+                    ^ gmul($mult2, state[1][i])
+                    ^ gmul($mult1, state[2][i])
+                    ^ gmul($mult0, state[3][i]);
             }
             out
         }
     }
 }
 
-impl_mix_columns!(mix_columns, [0x02, 0x01, 0x01, 0x03]);
-impl_mix_columns!(inv_mix_columns, [0x0e, 0x09, 0x0d, 0x0b]);
+pub fn add_round_key(state: &State, round_key: &State) -> State { state.xor(round_key) }
+pub fn sub_bytes(state: &State) -> State { state.sub_sbox() }
+pub fn inv_sub_bytes(state: &State) -> State { state.sub_rsbox() }
+pub fn shift_rows(state: &State) -> State { state.lrot() }
+pub fn inv_shift_rows(state: &State) -> State { state.rrot() }
+impl_mix_columns!(mix_columns, 0x02, 0x01, 0x01, 0x03);
+impl_mix_columns!(inv_mix_columns, 0x0e, 0x09, 0x0d, 0x0b);
+
+pub fn reversal(input: &State) -> State {
+    let mut out = [[0; 4]; 4];
+    for (i, &n) in input.iter().enumerate() {
+        for (j, &u) in n.iter().enumerate() {
+            out[j][i] = u;
+        }
+    }
+    out
+}
+
+/// ```
+/// use aes::aes::encrypt;
+/// assert_eq!(
+///     encrypt(&[0; 16], &[0; 16]),
+///     [102, 233, 75, 212, 239, 138, 44, 59, 136, 76, 250, 89, 202, 52, 43, 46]
+/// );
+/// assert_eq!(
+///     encrypt(b"0123456789123456", b"0987654321123456"),
+///     [215, 88, 51, 56, 75, 78, 81, 214, 230, 55, 134, 27, 39, 58, 179, 70]
+/// );
+/// ```
+pub fn encrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
+    let rounds = 10 + (key.len() / 4) - 4;
+    let mut state = reversal(&create_state(data));
+    let mut round_keys = vec![[[0; 4]; 4]; rounds + 1];
+    key_expansion(key, &mut round_keys);
+
+    state = add_round_key(&state, &reversal(&round_keys[0]));
+
+    for i in 1..rounds {
+        state = sub_bytes(&state);
+        state = shift_rows(&state);
+        state = mix_columns(&state);
+        state = add_round_key(&state, &reversal(&round_keys[i]));
+    }
+
+    state = sub_bytes(&state);
+    state = shift_rows(&state);
+    state = add_round_key(&state, &reversal(&round_keys[rounds]));
+
+    reversal(&state).concat()
+}
