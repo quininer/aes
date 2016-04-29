@@ -168,7 +168,7 @@ macro_rules! impl_mix_columns {
     }
 }
 
-pub fn add_round_key(state: &State, round_key: &State) -> State { state.xor(round_key) }
+pub fn add_round_key(state: &State, round_key: &State) -> State { state.xor(&reversal(round_key)) }
 pub fn sub_bytes(state: &State) -> State { state.sub_sbox() }
 pub fn inv_sub_bytes(state: &State) -> State { state.sub_rsbox() }
 pub fn shift_rows(state: &State) -> State { state.lrot() }
@@ -176,6 +176,23 @@ pub fn inv_shift_rows(state: &State) -> State { state.rrot() }
 impl_mix_columns!(mix_columns, 0x02, 0x01, 0x01, 0x03);
 impl_mix_columns!(inv_mix_columns, 0x0e, 0x09, 0x0d, 0x0b);
 
+/// ```
+/// use aes::aes::reversal;
+/// assert_eq!(
+///     reversal(&[
+///         [0, 1, 2, 3],
+///         [4, 5, 6, 7],
+///         [8, 9, 1, 2],
+///         [3, 4, 5, 6]
+///     ]),
+///     [
+///         [0, 4, 8, 3],
+///         [1, 5, 9, 4],
+///         [2, 6, 1, 5],
+///         [3, 7, 2, 6]
+///     ]
+/// );
+/// ```
 pub fn reversal(input: &State) -> State {
     let mut out = [[0; 4]; 4];
     for (i, &n) in input.iter().enumerate() {
@@ -189,10 +206,6 @@ pub fn reversal(input: &State) -> State {
 /// ```
 /// use aes::aes::encrypt;
 /// assert_eq!(
-///     encrypt(&[0; 16], &[0; 16]),
-///     [102, 233, 75, 212, 239, 138, 44, 59, 136, 76, 250, 89, 202, 52, 43, 46]
-/// );
-/// assert_eq!(
 ///     encrypt(b"0123456789123456", b"0987654321123456"),
 ///     [215, 88, 51, 56, 75, 78, 81, 214, 230, 55, 134, 27, 39, 58, 179, 70]
 /// );
@@ -203,18 +216,47 @@ pub fn encrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
     let mut round_keys = vec![[[0; 4]; 4]; rounds + 1];
     key_expansion(key, &mut round_keys);
 
-    state = add_round_key(&state, &reversal(&round_keys[0]));
+    state = add_round_key(&state, &round_keys[0]);
 
     for i in 1..rounds {
         state = sub_bytes(&state);
         state = shift_rows(&state);
         state = mix_columns(&state);
-        state = add_round_key(&state, &reversal(&round_keys[i]));
+        state = add_round_key(&state, &round_keys[i]);
     }
 
     state = sub_bytes(&state);
     state = shift_rows(&state);
-    state = add_round_key(&state, &reversal(&round_keys[rounds]));
+    state = add_round_key(&state, &round_keys[rounds]);
+
+    reversal(&state).concat()
+}
+
+/// ```
+/// use aes::aes::{ encrypt, decrypt };
+/// assert_eq!(
+///     decrypt(b"0123456789123456", &encrypt(b"0123456789123456", b"0987654321123456")),
+///     b"0987654321123456"
+/// );
+/// ```
+pub fn decrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
+    let rounds = 10 + (key.len() / 4) - 4;
+    let mut state = reversal(&create_state(data));
+    let mut round_keys = vec![[[0; 4]; 4]; rounds + 1];
+    key_expansion(key, &mut round_keys);
+
+    state = add_round_key(&state, &round_keys[rounds]);
+
+    for i in (1..rounds).rev() {
+        state = inv_shift_rows(&state);
+        state = inv_sub_bytes(&state);
+        state = add_round_key(&state, &round_keys[i]);
+        state = inv_mix_columns(&state);
+    }
+
+    state = inv_sub_bytes(&state);
+    state = inv_shift_rows(&state);
+    state = add_round_key(&state, &round_keys[0]);
 
     reversal(&state).concat()
 }

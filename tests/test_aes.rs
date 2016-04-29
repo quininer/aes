@@ -68,25 +68,6 @@ fn test_aes_rcon() {
 }
 
 #[test]
-fn test_reversal() {
-    use aes::aes::reversal;
-    assert_eq!(
-        reversal(&[
-            [0, 1, 2, 3],
-            [4, 5, 6, 7],
-            [8, 9, 1, 2],
-            [3, 4, 5, 6]
-        ]),
-        [
-            [0, 4, 8, 3],
-            [1, 5, 9, 4],
-            [2, 6, 1, 5],
-            [3, 7, 2, 6]
-        ]
-    );
-}
-
-#[test]
 fn test_mix_columns() {
     use aes::aes::mix_columns;
     assert_eq!(
@@ -133,6 +114,11 @@ fn test_encrypt() {
     use openssl::crypto::symm::{ Crypter, Type, Mode };
     use aes::aes::encrypt;
 
+    assert_eq!(
+        encrypt(&[0; 16], &[0; 16]),
+        [102, 233, 75, 212, 239, 138, 44, 59, 136, 76, 250, 89, 202, 52, 43, 46]
+    );
+
     let key = rand!(16);
     let plaintext = rand!(16);
     let openssl_cipher = Crypter::new(Type::AES_128_ECB);
@@ -152,5 +138,23 @@ fn test_encrypt() {
     assert_eq!(
         encrypt(&key, &plaintext),
         openssl_cipher.update(&plaintext)
+    );
+}
+
+#[test]
+fn test_decrypt() {
+    use aes::aes::{ encrypt, decrypt };
+
+    assert_eq!(
+        decrypt(&[0; 16], &[0; 16]),
+        [20, 15, 15, 16, 17, 181, 34, 61, 121, 88, 119, 23, 255, 217, 236, 58]
+    );
+
+    let key = rand!(16);
+    let plaintext = rand!(16);
+
+    assert_eq!(
+        decrypt(&key, &encrypt(&key, &plaintext)),
+        plaintext
     );
 }
