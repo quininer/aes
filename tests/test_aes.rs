@@ -1,5 +1,6 @@
 extern crate openssl;
 extern crate rand;
+extern crate crypto;
 extern crate aes;
 
 #[path = "./rand.rs"]
@@ -112,6 +113,8 @@ fn test_inv_mix_columns() {
 #[test]
 fn test_encrypt() {
     use openssl::crypto::symm::{ Crypter, Type, Mode };
+    use crypto::{ buffer, aes, blockmodes };
+    use crypto::buffer::{ ReadBuffer, WriteBuffer };
     use aes::aes::encrypt;
 
     assert_eq!(
@@ -131,13 +134,19 @@ fn test_encrypt() {
     );
 
     let key = rand!(32);
-    let openssl_cipher = Crypter::new(Type::AES_256_ECB);
-    openssl_cipher.init(Mode::Encrypt, &key, &[]);
-    openssl_cipher.pad(false);
+    let mut crypto_cipher = aes::ecb_encryptor(
+        aes::KeySize::KeySize256,
+        &key,
+        blockmodes::NoPadding
+    );
+    let mut out = [0; 16];
+    let mut read_buffer = buffer::RefReadBuffer::new(&plaintext);
+    let mut write_buffer = buffer::RefWriteBuffer::new(&mut out);
+    crypto_cipher.encrypt(&mut read_buffer, &mut write_buffer, true).ok();
 
     assert_eq!(
         encrypt(&key, &plaintext),
-        openssl_cipher.update(&plaintext)
+        write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i).collect::<Vec<u8>>()
     );
 }
 
