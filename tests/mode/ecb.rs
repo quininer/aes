@@ -7,24 +7,10 @@ use aes::cipher::{ BlockEncrypt, BlockDecrypt };
 #[test]
 fn test_ecb_encrypt() {
     let key = rand!(16);
-    let plaintext = rand!(15);
-
-    let mut cipher = Ecb::new(&key);
+    let plaintext = rand!(rand!(choose 15..65));
 
     assert_eq!(
-        cipher.encrypt::<Pkcs7Padding>(&plaintext),
-        encrypt(Type::AES_128_ECB, &key, &[], &plaintext)
-    );
-
-    let plaintext = rand!(25);
-    assert_eq!(
-        cipher.encrypt::<Pkcs7Padding>(&plaintext),
-        encrypt(Type::AES_128_ECB, &key, &[], &plaintext)
-    );
-
-    let plaintext = rand!(55);
-    assert_eq!(
-        cipher.encrypt::<Pkcs7Padding>(&plaintext),
+        Ecb::new(&key).encrypt::<Pkcs7Padding>(&plaintext),
         encrypt(Type::AES_128_ECB, &key, &[], &plaintext)
     );
 }

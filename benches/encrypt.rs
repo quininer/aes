@@ -8,6 +8,7 @@ extern crate aes;
 
 #[path = "../tests/rand.rs"]
 #[macro_use] mod rand_macro;
+mod mode;
 
 use test::Bencher;
 
