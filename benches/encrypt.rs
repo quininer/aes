@@ -49,10 +49,11 @@ fn bench_crypto_encrypt(b: &mut Bencher) {
 
 #[bench]
 fn bench_aes_encrypt(b: &mut Bencher) {
-    use aes::aes::encrypt;
+    use aes::AES;
+    use aes::cipher::SingleBlockEncrypt;
 
     let key = rand!(16);
     let plaintext = rand!(16);
 
-    b.iter(|| encrypt(&key, &plaintext))
+    b.iter(|| AES::new(&key).encrypt(&plaintext))
 }

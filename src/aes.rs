@@ -1,8 +1,5 @@
-use ::state::{
-    u8x4, State,
-    Ops,
-    create_state
-};
+use ::state::{ State, Ops, create_state };
+use ::cipher::{ SingleBlockEncrypt, SingleBlockDecrypt };
 
 
 lazy_static!{
@@ -102,7 +99,7 @@ lazy_static!{
 ///     [[0x24, 0xfc, 0x79, 0xcc], [0xbf, 0x09, 0x79, 0xe9], [0x37, 0x1a, 0xc2, 0x3c], [0x6d, 0x68, 0xde, 0x36]]
 /// ]);
 /// ```
-pub fn key_expansion(key: &[u8], round_keys: &mut [[u8x4; 4]]) {
+pub fn key_expansion(key: &[u8], round_keys: &mut [State]) {
     let key_words = key.len() / 4;
     assert!(match key_words { 4 | 6 | 8 => true, _ => false });
     let rounds = 10 + key_words - 4;
@@ -203,19 +200,9 @@ pub fn reversal(input: &State) -> State {
     out
 }
 
-/// ```
-/// use aes::aes::encrypt;
-/// assert_eq!(
-///     encrypt(b"0123456789123456", b"0987654321123456"),
-///     [215, 88, 51, 56, 75, 78, 81, 214, 230, 55, 134, 27, 39, 58, 179, 70]
-/// );
-/// ```
-pub fn encrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
-    let rounds = 10 + (key.len() / 4) - 4;
+pub fn encrypt_core(round_keys: &[State], data: &[u8]) -> Vec<u8> {
+    let rounds = round_keys.len() - 1;
     let mut state = create_state(data);
-    let mut round_keys = vec![[[0; 4]; 4]; rounds + 1];
-    key_expansion(key, &mut round_keys);
-
     state = add_round_key(&state, &round_keys[0]);
 
     for i in 1..rounds {
@@ -232,23 +219,9 @@ pub fn encrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
     state.concat()
 }
 
-/// ```
-/// use aes::aes::{ encrypt, decrypt };
-/// assert_eq!(
-///     decrypt(b"0123456789123456", &encrypt(b"0123456789123456", b"0987654321123456")),
-///     b"0987654321123456"
-/// );
-/// assert_eq!(
-///     encrypt(b"0123456789123456", &decrypt(b"0123456789123456", b"0987654321123456")),
-///     b"0987654321123456"
-/// );
-/// ```
-pub fn decrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
-    let rounds = 10 + (key.len() / 4) - 4;
+pub fn decrypt_core(round_keys: &[State], data: &[u8]) -> Vec<u8> {
+    let rounds = round_keys.len() - 1;
     let mut state = create_state(data);
-    let mut round_keys = vec![[[0; 4]; 4]; rounds + 1];
-    key_expansion(key, &mut round_keys);
-
     state = add_round_key(&state, &round_keys[rounds]);
 
     for i in (1..rounds).rev() {
@@ -263,4 +236,55 @@ pub fn decrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
     state = add_round_key(&state, &round_keys[0]);
 
     state.concat()
+}
+
+
+pub struct AES {
+    round_keys: Vec<State>
+}
+
+impl AES {
+    pub fn new(key: &[u8]) -> AES {
+        let rounds = 10 + (key.len() / 4) - 4;
+        let mut round_keys = vec![[[0; 4]; 4]; rounds + 1];
+        key_expansion(key, &mut round_keys);
+
+        AES { round_keys: round_keys }
+    }
+}
+
+impl SingleBlockEncrypt for AES {
+    fn bs() -> usize { 16 }
+
+    /// ```
+    /// use aes::AES;
+    /// use aes::cipher::SingleBlockEncrypt;
+    /// assert_eq!(
+    ///     AES::new(b"0123456789123456").encrypt(b"0987654321123456"),
+    ///     [215, 88, 51, 56, 75, 78, 81, 214, 230, 55, 134, 27, 39, 58, 179, 70]
+    /// );
+    /// ```
+    fn encrypt(&self, data: &[u8]) -> Vec<u8> {
+        encrypt_core(&self.round_keys, data)
+    }
+}
+
+impl SingleBlockDecrypt for AES {
+    fn bs() -> usize { 16 }
+
+    /// ```
+    /// use aes::AES;
+    /// use aes::cipher::{ SingleBlockEncrypt, SingleBlockDecrypt };
+    /// assert_eq!(
+    ///     AES::new(b"0123456789123456").decrypt(&AES::new(b"0123456789123456").encrypt(b"0987654321123456")),
+    ///     b"0987654321123456"
+    /// );
+    /// assert_eq!(
+    ///     AES::new(b"0123456789123456").encrypt(&AES::new(b"0123456789123456").decrypt(b"0987654321123456")),
+    ///     b"0987654321123456"
+    /// );
+    /// ```
+    fn decrypt(&self, data: &[u8]) -> Vec<u8> {
+        decrypt_core(&self.round_keys, data)
+    }
 }

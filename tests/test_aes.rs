@@ -6,6 +6,9 @@ extern crate aes;
 #[path = "./rand.rs"]
 #[macro_use] mod rand_macro;
 
+use aes::AES;
+use aes::cipher::{ SingleBlockEncrypt, SingleBlockDecrypt };
+
 
 #[test]
 fn test_aes_sbox() {
@@ -115,10 +118,9 @@ fn test_encrypt() {
     use openssl::crypto::symm::{ Crypter, Type, Mode };
     use crypto::{ buffer, aes, blockmodes };
     use crypto::buffer::{ ReadBuffer, WriteBuffer };
-    use aes::aes::encrypt;
 
     assert_eq!(
-        encrypt(&[0; 16], &[0; 16]),
+        AES::new(&[0; 16]).encrypt(&[0; 16]),
         [102, 233, 75, 212, 239, 138, 44, 59, 136, 76, 250, 89, 202, 52, 43, 46]
     );
 
@@ -129,7 +131,7 @@ fn test_encrypt() {
     openssl_cipher.pad(false);
 
     assert_eq!(
-        encrypt(&key, &plaintext),
+        AES::new(&key).encrypt(&plaintext),
         openssl_cipher.update(&plaintext)
     );
 
@@ -145,17 +147,15 @@ fn test_encrypt() {
     crypto_cipher.encrypt(&mut read_buffer, &mut write_buffer, true).ok();
 
     assert_eq!(
-        encrypt(&key, &plaintext),
+        AES::new(&key).encrypt(&plaintext),
         write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i).collect::<Vec<u8>>()
     );
 }
 
 #[test]
 fn test_decrypt() {
-    use aes::aes::{ encrypt, decrypt };
-
     assert_eq!(
-        decrypt(&[0; 16], &[0; 16]),
+        AES::new(&[0; 16]).decrypt(&[0; 16]),
         [20, 15, 15, 16, 17, 181, 34, 61, 121, 88, 119, 23, 255, 217, 236, 58]
     );
 
@@ -163,7 +163,7 @@ fn test_decrypt() {
     let plaintext = rand!(16);
 
     assert_eq!(
-        decrypt(&key, &encrypt(&key, &plaintext)),
+        AES::new(&key).decrypt(&AES::new(&key).encrypt(&plaintext)),
         plaintext
     );
 }

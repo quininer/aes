@@ -4,3 +4,6 @@
 
 pub mod state;
 pub mod aes;
+pub mod cipher;
+
+pub use aes::AES;
