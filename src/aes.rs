@@ -101,7 +101,7 @@ lazy_static!{
 /// ```
 pub fn key_expansion(key: &[u8], round_keys: &mut [State]) {
     let key_words = key.len() / 4;
-    assert!(match key_words { 4 | 6 | 8 => true, _ => false });
+    debug_assert!(match key_words { 4 | 6 | 8 => true, _ => false });
     let rounds = 10 + key_words - 4;
 
     for (i, j) in (0..key.len()).step_by(4).enumerate() {
@@ -238,7 +238,7 @@ pub fn decrypt_core(round_keys: &[State], data: &[u8]) -> Vec<u8> {
     state.concat()
 }
 
-
+#[derive(Clone)]
 pub struct AES {
     round_keys: Vec<State>
 }

@@ -6,6 +6,8 @@ extern crate aes;
 #[path = "./rand.rs"]
 #[macro_use] mod rand_macro;
 
+mod mode;
+
 use aes::AES;
 use aes::cipher::{ SingleBlockEncrypt, SingleBlockDecrypt };
 
