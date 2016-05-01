@@ -14,8 +14,9 @@ pub struct Cbc<C> {
 }
 
 impl<C> Cbc<C> {
-    pub fn set_iv(&mut self, iv: &[u8]) {
+    pub fn set_iv(&mut self, iv: &[u8]) -> &mut Cbc<C> {
         self.iv = iv.into();
+        self
     }
 }
 

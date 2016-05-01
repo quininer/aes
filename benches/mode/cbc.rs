@@ -9,7 +9,7 @@ use aes::cipher::BlockEncrypt;
 fn bench_aes_cbc(b: &mut Bencher) {
     let key = rand!(16);
     let iv = rand!(16);
-    let plaintext = rand!(64);
+    let plaintext = rand!(63);
 
     b.iter(|| Cbc::new(&key, &iv).encrypt::<Pkcs7Padding>(&plaintext));
 }
@@ -18,7 +18,7 @@ fn bench_aes_cbc(b: &mut Bencher) {
 fn bench_openssl_cbc(b: &mut Bencher) {
     let key = rand!(16);
     let iv = rand!(16);
-    let plaintext = rand!(64);
+    let plaintext = rand!(63);
 
     b.iter(|| encrypt(Type::AES_128_CBC, &key, &iv, &plaintext));
 }

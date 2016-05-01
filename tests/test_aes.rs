@@ -128,13 +128,13 @@ fn test_encrypt() {
 
     let key = rand!(16);
     let plaintext = rand!(16);
-    let openssl_cipher = Crypter::new(Type::AES_128_ECB);
-    openssl_cipher.init(Mode::Encrypt, &key, &[]);
-    openssl_cipher.pad(false);
+    let os_cipher = Crypter::new(Type::AES_128_ECB);
+    os_cipher.init(Mode::Encrypt, &key, &[]);
+    os_cipher.pad(false);
 
     assert_eq!(
         AES::new(&key).encrypt(&plaintext),
-        openssl_cipher.update(&plaintext)
+        os_cipher.update(&plaintext)
     );
 
     let key = rand!(32);

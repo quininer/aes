@@ -8,7 +8,7 @@ use aes::cipher::BlockEncrypt;
 #[bench]
 fn bench_aes_ecb(b: &mut Bencher) {
     let key = rand!(16);
-    let plaintext = rand!(64);
+    let plaintext = rand!(63);
 
     b.iter(|| Ecb::new(&key).encrypt::<Pkcs7Padding>(&plaintext));
 }
@@ -16,7 +16,7 @@ fn bench_aes_ecb(b: &mut Bencher) {
 #[bench]
 fn bench_openssl_ecb(b: &mut Bencher) {
     let key = rand!(16);
-    let plaintext = rand!(64);
+    let plaintext = rand!(63);
 
     b.iter(|| encrypt(Type::AES_128_ECB, &key, &[], &plaintext));
 }

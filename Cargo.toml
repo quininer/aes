@@ -8,5 +8,5 @@ lazy_static = "0.2"
 
 [dev-dependencies]
 rust-crypto = "0.2"
-openssl = "0.7"
+openssl = { version = "0.7", features = [ "aes_ctr" ] }
 rand = "0.3"
