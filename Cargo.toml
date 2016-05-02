@@ -5,6 +5,7 @@ authors = ["quininer kel <quininer@live.com>"]
 
 [dependencies]
 lazy_static = "0.2"
+num = "0.1"
 
 [dev-dependencies]
 rust-crypto = "0.2"

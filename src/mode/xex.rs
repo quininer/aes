@@ -1,7 +1,8 @@
 use ::AES;
 use ::utils::xor;
-use ::utils::padding::{ Padding, PaddingError, NoPadding };
+use ::utils::padding::{ Padding, NoPadding };
 use ::cipher::{
+    DecryptFail,
     SingleBlockEncrypt, SingleBlockDecrypt,
     BlockEncrypt, BlockDecrypt,
     CtsBlockEncrypt, CtsBlockDecrypt
@@ -15,7 +16,7 @@ pub struct Xex<C> {
 pub type Xts<C> = Xex<C>;
 
 impl Xex<AES> {
-    pub fn new(key1: &[u8], key2: &[u8], i: &[u8]) -> Xex<AES> {
+    pub fn new(key1: &[u8], key2: &[u8], i: &[u8]) -> Self {
         Xex {
             cipher: AES::new(key1),
             tweak: AES::new(key2).encrypt(i),
@@ -33,7 +34,7 @@ impl<C> Xex<C> {
         let mut out = Vec::with_capacity(tweak.len());
         let (mut x, mut y) = (0, 0);
 
-        for &b in tweak.iter() {
+        for &b in tweak {
             y = (b >> 7) & 1;
             out.push(((b << 1) + x) & 0xff);
             x = y
@@ -66,7 +67,7 @@ impl<C> BlockEncrypt for Xex<C> where C: SingleBlockEncrypt {
 
 impl<C> BlockDecrypt for Xex<C> where C: SingleBlockDecrypt {
     fn bs(&self) -> usize { C::bs() }
-    fn decrypt<P: Padding>(&mut self, data: &[u8]) -> Result<Vec<u8>, PaddingError> {
+    fn decrypt<P: Padding>(&mut self, data: &[u8]) -> Result<Vec<u8>, DecryptFail> {
         debug_assert_eq!(self.tweak.len(), self.bs());
         let out = data.chunks(self.bs())
             .map(|b| {
@@ -78,7 +79,7 @@ impl<C> BlockDecrypt for Xex<C> where C: SingleBlockDecrypt {
                 sum.append(&mut next);
                 sum
             });
-        P::unpadding(&out, self.bs())
+        P::unpadding(&out, self.bs()).map_err(|err| err.into())
     }
 }
 

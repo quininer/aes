@@ -1,6 +1,7 @@
 use ::AES;
-use ::utils::padding::{ Padding, PaddingError };
+use ::utils::padding::Padding;
 use ::cipher::{
+    DecryptFail,
     SingleBlockEncrypt, SingleBlockDecrypt,
     BlockEncrypt, BlockDecrypt
 };
@@ -31,7 +32,7 @@ impl<C> BlockEncrypt for Ecb<C> where C: SingleBlockEncrypt {
 
 impl<C> BlockDecrypt for Ecb<C> where C: SingleBlockDecrypt {
     fn bs(&self) -> usize { C::bs() }
-    fn decrypt<P: Padding>(&mut self, data: &[u8]) -> Result<Vec<u8>, PaddingError> {
+    fn decrypt<P: Padding>(&mut self, data: &[u8]) -> Result<Vec<u8>, DecryptFail> {
         P::unpadding(
             &data.chunks(self.bs())
                 .map(|b| self.cipher.decrypt(b))
@@ -40,6 +41,6 @@ impl<C> BlockDecrypt for Ecb<C> where C: SingleBlockDecrypt {
                     sum
                 }),
             self.bs()
-        )
+        ).map_err(|err| err.into())
     }
 }
