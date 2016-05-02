@@ -168,15 +168,15 @@ macro_rules! impl_mix_columns {
 pub fn add_round_key(state: &State, round_key: &State) -> State { state.xor(round_key) }
 pub fn sub_bytes(state: &State) -> State { state.sub_sbox() }
 pub fn inv_sub_bytes(state: &State) -> State { state.sub_rsbox() }
-pub fn shift_rows(state: &State) -> State { reversal(&reversal(&state).lrot()) }
-pub fn inv_shift_rows(state: &State) -> State { reversal(&reversal(&state).rrot()) }
+pub fn shift_rows(state: &State) -> State { transpose(&transpose(&state).lrot()) }
+pub fn inv_shift_rows(state: &State) -> State { transpose(&transpose(&state).rrot()) }
 impl_mix_columns!(mix_columns, 0x02, 0x01, 0x01, 0x03);
 impl_mix_columns!(inv_mix_columns, 0x0e, 0x09, 0x0d, 0x0b);
 
 /// ```
-/// use aes::aes::reversal;
+/// use aes::aes::transpose;
 /// assert_eq!(
-///     reversal(&[
+///     transpose(&[
 ///         [0, 1, 2, 3],
 ///         [4, 5, 6, 7],
 ///         [8, 9, 1, 2],
@@ -190,7 +190,7 @@ impl_mix_columns!(inv_mix_columns, 0x0e, 0x09, 0x0d, 0x0b);
 ///     ]
 /// );
 /// ```
-pub fn reversal(input: &State) -> State {
+pub fn transpose(input: &State) -> State {
     let mut out = [[0; 4]; 4];
     for (i, &n) in input.iter().enumerate() {
         for (j, &u) in n.iter().enumerate() {
