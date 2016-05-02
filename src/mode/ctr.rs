@@ -14,7 +14,7 @@ pub struct Ctr<C> {
 }
 
 impl<C> Ctr<C> {
-    pub fn set_ctr(&mut self, ctr: &[u8]) -> &mut Ctr<C> {
+    pub fn set_ctr(&mut self, ctr: &[u8]) -> &mut Self {
         self.counter = ctr.into();
         self.buffer.clear();
         self
@@ -26,7 +26,7 @@ impl Ctr<AES> {
         Ctr {
             cipher: AES::new(key),
             counter: counter.into(),
-            buffer: Vec::new()
+            buffer: Vec::with_capacity(15)
         }
     }
 }
