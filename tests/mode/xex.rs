@@ -1,3 +1,4 @@
+use aes::AES;
 use aes::mode::Xex;
 use aes::utils::padding::Pkcs7Padding;
 use aes::cipher::{ BlockEncrypt, BlockDecrypt };
@@ -15,5 +16,17 @@ fn test_xex_decrypt() {
             &Xex::new(&key1, &key2, &i).encrypt::<Pkcs7Padding>(&plaintext)
         ),
         Ok(plaintext)
+    );
+}
+
+#[test]
+fn test_xex_next_tweak() {
+    assert_eq!(
+        Xex::<AES>::next_tweak(&[0; 16]),
+        [0; 16]
+    );
+    assert_eq!(
+        Xex::<AES>::next_tweak(&[[1, 2, 3, 4]; 4].concat()),
+        [[2, 4, 6, 8]; 4].concat()
     );
 }

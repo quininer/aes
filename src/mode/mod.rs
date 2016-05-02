@@ -6,4 +6,4 @@ pub mod xex;
 pub use self::ecb::Ecb;
 pub use self::cbc::Cbc;
 pub use self::ctr::Ctr;
-pub use self::xex::Xex;
+pub use self::xex::{ Xex, Xts };

@@ -1,9 +1,10 @@
 use ::AES;
 use ::utils::xor;
-use ::utils::padding::{ Padding, PaddingError };
+use ::utils::padding::{ Padding, PaddingError, NoPadding };
 use ::cipher::{
     SingleBlockEncrypt, SingleBlockDecrypt,
-    BlockEncrypt, BlockDecrypt
+    BlockEncrypt, BlockDecrypt,
+    CtsBlockEncrypt, CtsBlockDecrypt
 };
 
 
@@ -11,6 +12,7 @@ pub struct Xex<C> {
     cipher: C,
     tweak: Vec<u8>,
 }
+pub type Xts<C> = Xex<C>;
 
 impl Xex<AES> {
     pub fn new(key1: &[u8], key2: &[u8], i: &[u8]) -> Xex<AES> {
@@ -26,6 +28,23 @@ impl<C> Xex<C> {
         self.tweak = tweak.into();
         self
     }
+
+    pub fn next_tweak(tweak: &[u8]) -> Vec<u8> {
+        let mut out = Vec::with_capacity(tweak.len());
+        let (mut x, mut y) = (0, 0);
+
+        for &b in tweak.iter() {
+            y = (b >> 7) & 1;
+            out.push(((b << 1) + x) & 0xff);
+            x = y
+        }
+
+        if y != 0 {
+            out[0] ^= 0x87;
+        }
+
+        out
+    }
 }
 
 impl<C> BlockEncrypt for Xex<C> where C: SingleBlockEncrypt {
@@ -35,11 +54,8 @@ impl<C> BlockEncrypt for Xex<C> where C: SingleBlockEncrypt {
         P::padding(data, self.bs()).chunks(self.bs())
             .map(|b| {
                 let tweak = self.tweak.clone();
-                self.set_tweak(&next_tweak(&tweak));
-                xor(
-                    &self.cipher.encrypt(&xor(b, &tweak)),
-                    &tweak
-                )
+                self.set_tweak(&Self::next_tweak(&tweak));
+                xex_encrypt(&self.cipher, b, &tweak)
             })
             .fold(Vec::new(), |mut sum, mut next| {
                 sum.append(&mut next);
@@ -55,11 +71,8 @@ impl<C> BlockDecrypt for Xex<C> where C: SingleBlockDecrypt {
         let out = data.chunks(self.bs())
             .map(|b| {
                 let tweak = self.tweak.clone();
-                self.set_tweak(&next_tweak(&tweak));
-                xor(
-                    &self.cipher.decrypt(&xor(b, &tweak)),
-                    &tweak
-                )
+                self.set_tweak(&Self::next_tweak(&tweak));
+                xex_decrypt(&self.cipher, b, &tweak)
             })
             .fold(Vec::new(), |mut sum, mut next| {
                 sum.append(&mut next);
@@ -69,20 +82,83 @@ impl<C> BlockDecrypt for Xex<C> where C: SingleBlockDecrypt {
     }
 }
 
-pub fn next_tweak(tweak: &[u8]) -> Vec<u8> {
-    let mut out = Vec::with_capacity(tweak.len());
-    let (mut x, mut y) = (0, 0);
+impl<C> CtsBlockEncrypt for Xts<C> where C: SingleBlockEncrypt {
+    fn encrypt(&mut self, data: &[u8]) -> Vec<u8> {
+        debug_assert!(data.len() >= self.bs());
+        let bs = self.bs();
+        let pos = data.len() / bs * bs;
+        let (head, stealer) = data.split_at(pos);
+        let head = BlockEncrypt::encrypt::<NoPadding>(self, head);
+        let (head, tail) = head.split_at(pos - bs);
 
-    for &b in tweak.iter() {
-        y = (b >> 7) & 1;
-        out.push(((b << 1) + x) & 0xff);
-        x = y
+        if stealer.is_empty() {
+            [
+                &head[..pos-bs],
+                tail,
+                &head[pos-bs..]
+            ].concat()
+        } else {
+            let tweak = self.tweak.clone();
+            self.set_tweak(&Self::next_tweak(&tweak));
+
+            [
+                head,
+                &xex_encrypt(&self.cipher, &[
+                    &stealer,
+                    &tail[stealer.len()..]
+                ].concat(), &tweak),
+                &tail[..stealer.len()]
+            ].concat()
+        }
     }
-
-    if y == 0 {
-        out[0] ^= 0x87;
-    }
-
-    out
 }
 
+impl<C> CtsBlockDecrypt for Xts<C> where C: SingleBlockDecrypt {
+    fn decrypt(&mut self, data: &[u8]) -> Vec<u8> {
+        debug_assert!(data.len() >= self.bs());
+        let bs = self.bs();
+        let pos = data.len() / bs * bs;
+        let (head, tail) = data.split_at(pos);
+        let (head, stealer) = head.split_at(pos - bs);
+
+        if tail.is_empty() {
+            BlockDecrypt::decrypt::<NoPadding>(self, &[
+                &head[..pos-bs],
+                stealer,
+                &head[pos-bs..]
+            ].concat()).unwrap()
+        } else {
+            let head = BlockDecrypt::decrypt::<NoPadding>(self, head).unwrap();
+            let tweak_tail = self.tweak.clone();
+            self.set_tweak(&Self::next_tweak(&tweak_tail));
+            let tweak_stealer = self.tweak.clone();
+            self.set_tweak(&Self::next_tweak(&tweak_stealer));
+
+            let stealer = xex_decrypt(&self.cipher, stealer, &tweak_stealer);
+
+            [
+                &head,
+                &xex_decrypt(
+                    &self.cipher,
+                    &[tail, &stealer[tail.len()..]].concat(),
+                    &tweak_tail
+                ),
+                &stealer[..tail.len()]
+            ].concat()
+        }
+    }
+}
+
+pub fn xex_encrypt<C: SingleBlockEncrypt>(cipher: &C, data: &[u8], tweak: &[u8]) -> Vec<u8> {
+    xor(
+        &cipher.encrypt(&xor(data, tweak)),
+        tweak
+    )
+}
+
+pub fn xex_decrypt<C: SingleBlockDecrypt>(cipher: &C, data: &[u8], tweak: &[u8]) -> Vec<u8> {
+    xor(
+        &cipher.decrypt(&xor(data, tweak)),
+        tweak
+    )
+}
