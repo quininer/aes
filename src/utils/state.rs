@@ -6,7 +6,7 @@ pub type u8x4 = [u8; 4];
 pub type State = [u8x4; 4];
 
 /// ```
-/// use aes::state::create_state;
+/// use aes::utils::state::create_state;
 /// assert_eq!(
 ///     create_state(&[[1, 2, 3, 4]; 4].concat()),
 ///     [[1, 2, 3, 4]; 4]
@@ -32,7 +32,7 @@ pub trait Ops {
 
 impl Ops for u8x4 {
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [1, 2, 3, 4].lrot(),
     ///     [2, 3, 4, 1]
@@ -47,7 +47,7 @@ impl Ops for u8x4 {
     }
 
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [1, 2, 3, 4].rrot(),
     ///     [4, 1, 2, 3]
@@ -62,7 +62,7 @@ impl Ops for u8x4 {
     }
 
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [1, 2, 3, 4].xor(&[4, 3, 2, 1]),
     ///     [5, 1, 1, 5]
@@ -78,7 +78,7 @@ impl Ops for u8x4 {
     }
 
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [1, 2, 3, 4].sub_sbox(),
     ///     [0x7c, 0x77, 0x7b, 0xf2]
@@ -94,7 +94,7 @@ impl Ops for u8x4 {
     }
 
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [1, 2, 3, 4].sub_sbox().sub_rsbox(),
     ///     [1, 2, 3, 4]
@@ -112,7 +112,7 @@ impl Ops for u8x4 {
 
 impl Ops for State {
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [[1, 2, 3, 4]; 4].lrot(),
     ///     [
@@ -133,7 +133,7 @@ impl Ops for State {
     }
 
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [[1, 2, 3, 4]; 4].lrot().rrot(),
     ///     [[1, 2, 3, 4]; 4]
@@ -149,7 +149,7 @@ impl Ops for State {
     }
 
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [[1, 2, 3, 4]; 4].xor(&[[4, 3, 2, 1]; 4]),
     ///     [[5, 1, 1, 5]; 4]
@@ -165,7 +165,7 @@ impl Ops for State {
     }
 
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [[1, 2, 3, 4]; 4].sub_sbox(),
     ///     [[124, 119, 123, 242]; 4]
@@ -181,7 +181,7 @@ impl Ops for State {
     }
 
     /// ```
-    /// use aes::state::Ops;
+    /// use aes::utils::state::Ops;
     /// assert_eq!(
     ///     [[1, 2, 3, 4]; 4].sub_sbox().sub_rsbox(),
     ///     [[1, 2, 3, 4]; 4]

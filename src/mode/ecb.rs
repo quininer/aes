@@ -7,7 +7,7 @@ use ::cipher::{
 };
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Ecb<C> {
     cipher: C
 }

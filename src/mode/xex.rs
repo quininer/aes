@@ -9,6 +9,7 @@ use ::cipher::{
 };
 
 
+#[derive(Clone, Debug)]
 pub struct Xex<C> {
     cipher: C,
     tweak: Vec<u8>,

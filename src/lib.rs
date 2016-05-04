@@ -4,7 +4,6 @@
 extern crate num;
 #[macro_use] extern crate lazy_static;
 
-pub mod state;
 pub mod aes;
 pub mod cipher;
 pub mod mode;

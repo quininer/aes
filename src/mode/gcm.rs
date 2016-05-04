@@ -10,6 +10,7 @@ use ::cipher::{
 };
 
 
+#[derive(Clone, Debug)]
 pub struct Gcm<C> {
     cipher: C,
     mac: Ghash,
@@ -19,12 +20,12 @@ pub struct Gcm<C> {
 impl Gcm<Ctr<AES>> {
     pub fn new(key: &[u8], nonce: &[u8], aad: &[u8]) -> Self {
         debug_assert_eq!(nonce.len(), 12);
-
         let x: &[u8] = &[0x00, 0x00, 0x00, 0x01];
         let mut cipher = Ctr::new(key, &[nonce, x].concat());
         let hash_key = AES::new(key).encrypt(&[0; 16]);
         let end_tag = cipher.encrypt(&[0; 16]);
         let ghash = Ghash::new(&hash_key, aad);
+
         Gcm {
             cipher: cipher,
             mac: ghash,
@@ -40,6 +41,7 @@ impl<C> AeadStreamEncrypt for Gcm<C> where C: StreamEncrypt {
             &self.end_tag,
             &self.mac.input(&out).result()
         );
+
         (out, tag)
     }
 }
@@ -51,8 +53,10 @@ impl<C> AeadStreamDecrypt for Gcm<C> where C: StreamDecrypt {
             &self.mac.input(data).result()
         );
 
-        if calc_tag != tag { Err(DecryptFail::Auth)? };
-
-        Ok(self.cipher.decrypt(data))
+        if calc_tag == tag {
+            Ok(self.cipher.decrypt(data))
+        } else {
+            Err(DecryptFail::Auth)
+        }
     }
 }

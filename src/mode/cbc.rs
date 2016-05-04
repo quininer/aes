@@ -8,7 +8,7 @@ use ::cipher::{
 };
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Cbc<C> {
     cipher: C,
     iv: Vec<u8>

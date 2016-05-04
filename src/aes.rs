@@ -1,4 +1,4 @@
-use ::state::{ State, Ops, create_state };
+use ::utils::state::{ State, Ops, create_state };
 use ::cipher::{ SingleBlockEncrypt, SingleBlockDecrypt };
 
 
@@ -238,7 +238,7 @@ pub fn decrypt_core(round_keys: &[State], data: &[u8]) -> Vec<u8> {
     state.concat()
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AES {
     round_keys: Vec<State>
 }

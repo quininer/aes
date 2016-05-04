@@ -6,7 +6,7 @@ use ::cipher::{
 };
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Ctr<C> {
     cipher: C,
     counter: Vec<u8>,
