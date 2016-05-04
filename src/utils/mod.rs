@@ -1,4 +1,5 @@
 pub mod padding;
+pub mod ghash;
 
 
 pub fn xor(a: &[u8], b: &[u8]) -> Vec<u8> {
