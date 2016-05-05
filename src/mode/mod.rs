@@ -1,8 +1,8 @@
-pub mod ecb;
-pub mod cbc;
-pub mod ctr;
-pub mod xex;
-pub mod gcm;
+mod ecb;
+mod cbc;
+mod ctr;
+mod xex;
+mod gcm;
 
 pub use self::ecb::Ecb;
 pub use self::cbc::Cbc;

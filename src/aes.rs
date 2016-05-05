@@ -200,7 +200,7 @@ pub fn transpose(input: &State) -> State {
     out
 }
 
-pub fn encrypt_core(round_keys: &[State], data: &[u8]) -> Vec<u8> {
+fn encrypt_core(round_keys: &[State], data: &[u8]) -> Vec<u8> {
     let rounds = round_keys.len() - 1;
     let mut state = create_state(data);
     state = add_round_key(&state, &round_keys[0]);
@@ -219,7 +219,7 @@ pub fn encrypt_core(round_keys: &[State], data: &[u8]) -> Vec<u8> {
     state.concat()
 }
 
-pub fn decrypt_core(round_keys: &[State], data: &[u8]) -> Vec<u8> {
+fn decrypt_core(round_keys: &[State], data: &[u8]) -> Vec<u8> {
     let rounds = round_keys.len() - 1;
     let mut state = create_state(data);
     state = add_round_key(&state, &round_keys[rounds]);

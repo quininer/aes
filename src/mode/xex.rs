@@ -151,14 +151,14 @@ impl<C> CtsBlockDecrypt for Xts<C> where C: SingleBlockDecrypt {
     }
 }
 
-pub fn xex_encrypt<C: SingleBlockEncrypt>(cipher: &C, data: &[u8], tweak: &[u8]) -> Vec<u8> {
+fn xex_encrypt<C: SingleBlockEncrypt>(cipher: &C, data: &[u8], tweak: &[u8]) -> Vec<u8> {
     xor(
         &cipher.encrypt(&xor(data, tweak)),
         tweak
     )
 }
 
-pub fn xex_decrypt<C: SingleBlockDecrypt>(cipher: &C, data: &[u8], tweak: &[u8]) -> Vec<u8> {
+fn xex_decrypt<C: SingleBlockDecrypt>(cipher: &C, data: &[u8], tweak: &[u8]) -> Vec<u8> {
     xor(
         &cipher.decrypt(&xor(data, tweak)),
         tweak

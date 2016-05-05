@@ -56,8 +56,15 @@ impl Ghash {
             ].concat()));
         }
 
-        let len = &self.aad_len | BigUint::from(self.txt_len * 8);
-        self.xor_mult(&self.state, &len).to_bytes_be()
+        let out = self.xor_mult(
+            &self.state,
+            &(&self.aad_len | BigUint::from(self.txt_len * 8))
+        ).to_bytes_be();
+
+        [
+            vec![0; 16 - out.len()],
+            out
+        ].concat()
     }
 }
 
