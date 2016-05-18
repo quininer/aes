@@ -1,7 +1,7 @@
 use ::AES;
 use ::utils::xor;
 use ::cipher::{
-    SingleBlockEncrypt, SingleBlockDecrypt,
+    SingleBlockEncrypt,
     StreamEncrypt, StreamDecrypt
 };
 
@@ -22,10 +22,10 @@ impl<C> Ctr<C> {
 }
 
 impl Ctr<AES> {
-    pub fn new(key: &[u8], counter: &[u8]) -> Ctr<AES> {
+    pub fn new(key: &[u8], ctr: &[u8]) -> Ctr<AES> {
         Ctr {
             cipher: AES::new(key),
-            counter: counter.into(),
+            counter: ctr.into(),
             buffer: Vec::with_capacity(15)
         }
     }
@@ -69,5 +69,5 @@ fn add_ctr(ctr: &[u8], mut ammount: u8) -> Vec<u8> {
         if ctr[i] >= b { break };
         ammount = 1;
     }
-    ctr.into()
+    ctr
 }
