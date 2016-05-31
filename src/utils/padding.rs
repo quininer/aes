@@ -1,7 +1,8 @@
 #[derive(Debug, PartialEq)]
 pub enum PaddingError {
     BadData,
-    BadPadding
+    BadPadding,
+    Other
 }
 
 pub trait Padding {

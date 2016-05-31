@@ -168,8 +168,8 @@ macro_rules! impl_mix_columns {
 pub fn add_round_key(state: &State, round_key: &State) -> State { state.xor(round_key) }
 pub fn sub_bytes(state: &State) -> State { state.sub_sbox() }
 pub fn inv_sub_bytes(state: &State) -> State { state.sub_rsbox() }
-pub fn shift_rows(state: &State) -> State { transpose(&transpose(&state).lrot()) }
-pub fn inv_shift_rows(state: &State) -> State { transpose(&transpose(&state).rrot()) }
+pub fn shift_rows(state: &State) -> State { transpose(&transpose(state).lrot()) }
+pub fn inv_shift_rows(state: &State) -> State { transpose(&transpose(state).rrot()) }
 impl_mix_columns!(mix_columns, 0x02, 0x01, 0x01, 0x03);
 impl_mix_columns!(inv_mix_columns, 0x0e, 0x09, 0x0d, 0x0b);
 

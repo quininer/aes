@@ -49,13 +49,14 @@ impl Ghash {
     }
 
     pub fn result(&self) -> Vec<u8> {
-        let mut state = self.state.clone();
-        if !self.buffer.is_empty() {
-            state = self.xor_mult(&state, &BigUint::from_bytes_be(&[
+        let state = if self.buffer.is_empty() {
+            self.state.clone()
+        } else {
+            self.xor_mult(&self.state, &BigUint::from_bytes_be(&[
                 self.buffer.clone(),
                 vec![0; (16 - self.buffer.len() % 16) % 16]
-            ].concat()));
-        }
+            ].concat()))
+        };
 
         let out = self.xor_mult(
             &state,

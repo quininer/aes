@@ -53,7 +53,7 @@ impl<C> AeadStreamDecrypt for Gcm<C> where C: StreamDecrypt {
             &self.mac.input(data).result()
         );
 
-        if eq(&calc_tag, &tag) {
+        if eq(&calc_tag, tag) {
             Ok(self.cipher.decrypt(data))
         } else {
             Err(DecryptFail::Auth)

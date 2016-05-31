@@ -106,7 +106,7 @@ impl<C> CtsBlockEncrypt for Xts<C> where C: SingleBlockEncrypt {
             [
                 head,
                 &xex_encrypt(&self.cipher, &[
-                    &stealer,
+                    stealer,
                     &tail[stealer.len()..]
                 ].concat(), &tweak),
                 &tail[..stealer.len()]
